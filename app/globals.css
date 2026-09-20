@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+@theme {
+  /* Kor & duman paleti — koyu tema (OLED dostu kömür karası) */
+  --color-komur: #0b0705;
+  --color-yuzey: #16100c;
+  --color-kart: #1d1511;
+  --color-cizgi: #2a1f19;
+  --color-kor: #ea580c;
+  --color-alev: #f97316;
+  --color-kor-derin: #b91c1c;
+  --color-altin: #f5c24b;
+  --color-krem: #f5efe7;
+  --color-duman: #a99a8c;
+
+  --font-baslik: var(--font-cinzel), "Times New Roman", serif;
+  --font-govde: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  /* Mobilde smooth, ScrollTrigger'ın kaydırma ölçümünü geciktirir */
+  scroll-behavior: auto;
+  color-scheme: dark;
+}
+
+@media (pointer: fine) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background-color: var(--color-komur);
+  color: var(--color-krem);
+  font-family: var(--font-govde);
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+  İlk girişte kaydırma şeridi: sahne sticky, video scroll ile senkron.
+  Çevirme bitince JS yüksekliği 100dvh yapar; menü açılır.
+*/
+.hero-iz {
+  position: relative;
+  height: 280svh;
+  background-color: var(--color-komur);
+}
+
+.hero-sahne {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: var(--color-komur);
+}
+
+/* Klavye kullanıcıları için her zaman görünür odak halkası */
+:focus-visible {
+  outline: 2px solid var(--color-alev);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/*
+  iOS/Android, duraklatılmış videonun üzerine kendi play düğmesini bindirir.
+  Denetimler tamamen kapatılır; tıklama da yutmasın diye olaylar kesilir.
+*/
+video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Izgara teli dokusu */
+.izgara-teli {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.85) 0px,
+    rgba(0, 0, 0, 0.85) 6px,
+    rgba(160, 150, 140, 0.16) 6px,
+    rgba(160, 150, 140, 0.16) 10px,
+    rgba(0, 0, 0, 0.85) 10px,
+    rgba(0, 0, 0, 0.85) 46px
+  );
+}
+
+/* Kor ateş parıltısı */
+.kor-parlti {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 78%, rgba(249, 115, 22, 0.42), transparent 70%),
+    radial-gradient(ellipse 35% 22% at 32% 86%, rgba(185, 28, 28, 0.45), transparent 70%),
+    radial-gradient(ellipse 35% 22% at 70% 88%, rgba(245, 194, 75, 0.28), transparent 72%);
+}
+
+/*
+  Kor kıvılcımları — hero'nun altındaki bölümlerin atmosferi.
+  Yukarıdaki mangaldan kopup aşağı süzülen kıvılcım hissi: dış katman düşüşü
+  ve genel sönümlenmeyi, iç nokta ise kendi titremesini üstlenir (iç içe
+  opaklık çarpıldığı için iki animasyon çakışmaz).
+*/
+.kivilcim {
+  position: absolute;
+  top: 0;
+  will-change: transform, opacity;
+  animation: kivilcim-dus var(--k-sure) linear var(--k-gecikme) infinite;
+}
+
+.kivilcim-nokta {
+  display: block;
+  border-radius: 9999px;
+  background: var(--k-renk);
+  box-shadow: 0 0 var(--k-hale) var(--k-renk);
+  animation: kivilcim-titre var(--k-titre) ease-in-out infinite;
+}
+
+@keyframes kivilcim-dus {
+  0% {
+    transform: translate3d(0, -10vh, 0) scale(var(--k-olcek));
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--k-opaklik);
+  }
+  50% {
+    transform: translate3d(var(--k-kayma), 45vh, 0)
+      scale(calc(var(--k-olcek) * 0.86));
+  }
+  82% {
+    opacity: calc(var(--k-opaklik) * 0.75);
+  }
+  100% {
+    transform: translate3d(calc(var(--k-kayma) * -0.55), 105vh, 0)
+      scale(calc(var(--k-olcek) * 0.5));
+    opacity: 0;
+  }
+}
+
+@keyframes kivilcim-titre {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/*
+  Azaltılmış hareket tercihi: hero scroll zaman çizelgesi hiç kurulmaz
+  (gsap.matchMedia), tavuk düz konumda durur, maşa görünmez kalır ve arka plan
+  videosu duraklatılır. Dekoratif hareketler CSS ile kaldırılır — böylece
+  sunucu/istemci HTML'i aynı kalır.
+*/
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .hareketli {
+    display: none !important;
+  }
+}

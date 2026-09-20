@@ -42,7 +42,7 @@ type MenuKategorisi = {
 const MENU: MenuKategorisi[] = [
   {
     baslik: "Ekmek Arası",
-    aciklama: "Çeyrek veya 3 çeyrek, ocaktan sıcak.",
+    aciklama: "Ocaktan sıcak, ekmek arasında.",
     urunler: [
       {
         ad: "Köfte",
@@ -66,14 +66,22 @@ const MENU: MenuKategorisi[] = [
           { ad: "3 Çeyrek", fiyat: 220 },
         ],
       },
+      {
+        ad: "Kokoreç",
+        fiyat: 200,
+        one: true,
+      },
     ],
   },
   {
     baslik: "Porsiyon",
     aciklama: "Tek başına, garnitürüyle.",
     urunler: [
-      { ad: "Tavuk Şiş", fiyat: 150 },
-      { ad: "Kokoreç", fiyat: 200, one: true },
+      { ad: "Köfte", one: true },
+      { ad: "Tavuk Pirzola" },
+      { ad: "Tavuk Kanat" },
+      { ad: "Tavuk Kelebek" },
+      { ad: "Ciğer" },
     ],
   },
   {
@@ -700,13 +708,17 @@ function OneCikanLezzetler() {
                             <span className="text-xs text-duman">{urun.birim}</span>
                           )}
                         </span>
-                        <span
-                          aria-hidden="true"
-                          className="min-w-4 flex-1 translate-y-[-0.3rem] border-b border-dashed border-krem/20"
-                        />
-                        <span className="font-baslik shrink-0 text-base font-bold text-alev sm:text-lg">
-                          {urun.fiyat} ₺
-                        </span>
+                        {urun.fiyat != null && (
+                          <>
+                            <span
+                              aria-hidden="true"
+                              className="min-w-4 flex-1 translate-y-[-0.3rem] border-b border-dashed border-krem/20"
+                            />
+                            <span className="font-baslik shrink-0 text-base font-bold text-alev sm:text-lg">
+                              {urun.fiyat} ₺
+                            </span>
+                          </>
+                        )}
                       </div>
                     )}
                   </li>
@@ -814,7 +826,12 @@ const ILETISIM: {
   {
     Ikon: KonumIkonu,
     baslik: "Adres",
-    satirlar: ["Sahil Caddesi No: 42", "Merkez / Türkiye"],
+    satirlar: [
+      "Halife Sultan, Adnan Menderes Blv. No:80",
+      "32040 Isparta Merkez / Isparta",
+    ],
+    href: "https://maps.google.com/?q=Halife+Sultan,+Adnan+Menderes+Blv.+No:80,+32040+Isparta+Merkez/Isparta",
+    dis: true,
   },
   {
     Ikon: TelefonIkonu,
@@ -832,7 +849,7 @@ const ILETISIM: {
   {
     Ikon: SaatIkonu,
     baslik: "Çalışma Saatleri",
-    satirlar: ["Her gün 11:00 – 23:30", "Pazartesi kapalı"],
+    satirlar: ["Hafta içi 12:00 – 01:00", "Hafta sonu 14:00 – 02:00"],
   },
 ];
 

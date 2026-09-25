@@ -48,21 +48,21 @@ const MENU: MenuKategorisi[] = [
         one: true,
         boyutlar: [
           { ad: "Yarım", fiyat: 180 },
-          { ad: "3 Yarım", fiyat: 250 },
+          { ad: "3 Çeyrek", fiyat: 250 },
         ],
       },
       {
         ad: "Tavuk",
         boyutlar: [
           { ad: "Yarım", fiyat: 150 },
-          { ad: "3 Yarım", fiyat: 220 },
+          { ad: "3 Çeyrek", fiyat: 220 },
         ],
       },
       {
         ad: "İncik",
         boyutlar: [
           { ad: "Yarım", fiyat: 150 },
-          { ad: "3 Yarım", fiyat: 220 },
+          { ad: "3 Çeyrek", fiyat: 220 },
         ],
       },
       {

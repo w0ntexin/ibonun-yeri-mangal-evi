@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     "Ustasının elinden çıkan gerçek mangal lezzeti. İBONUN YERİ MANGAL EVİ'nde tavuk, kanat ve köfte keyfi.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

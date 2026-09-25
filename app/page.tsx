@@ -47,22 +47,22 @@ const MENU: MenuKategorisi[] = [
         ad: "Köfte",
         one: true,
         boyutlar: [
-          { ad: "Çeyrek", fiyat: 180 },
-          { ad: "3 Çeyrek", fiyat: 250 },
+          { ad: "Yarım", fiyat: 180 },
+          { ad: "3 Yarım", fiyat: 250 },
         ],
       },
       {
         ad: "Tavuk",
         boyutlar: [
-          { ad: "Çeyrek", fiyat: 150 },
-          { ad: "3 Çeyrek", fiyat: 220 },
+          { ad: "Yarım", fiyat: 150 },
+          { ad: "3 Yarım", fiyat: 220 },
         ],
       },
       {
         ad: "İncik",
         boyutlar: [
-          { ad: "Çeyrek", fiyat: 150 },
-          { ad: "3 Çeyrek", fiyat: 220 },
+          { ad: "Yarım", fiyat: 150 },
+          { ad: "3 Yarım", fiyat: 220 },
         ],
       },
       {
@@ -227,8 +227,8 @@ function AlevIkonu({ className }: IkonProps) {
 
 function Header() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-cizgi/70 bg-komur/55 backdrop-blur-xl">
-      <div className="flex h-[72px] items-center justify-between gap-4 px-5 md:h-[82px] md:px-9 lg:h-[88px] lg:px-12">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-cizgi/70 bg-komur/55 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+      <div className="flex h-[72px] items-center justify-between gap-2 px-4 md:h-[82px] md:gap-4 md:px-9 lg:h-[88px] lg:px-12">
         <a
           href="#"
           className="flex shrink-0 items-center"
@@ -302,6 +302,36 @@ function Hero() {
       return el.play().catch(() => undefined);
     };
 
+    const posterGizle = () => {
+      if (poster) poster.style.opacity = "0";
+    };
+
+    const dokunmatik =
+      /iP(hone|od|ad)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
+      window.matchMedia("(pointer: coarse)").matches;
+
+    if (dokunmatik) {
+      a.loop = true;
+      a.setAttribute("loop", "true");
+      const kilidiAc = () => {
+        void oynat(a);
+        posterGizle();
+      };
+      void oynat(a).then(() => {
+        if (!a.paused) posterGizle();
+      });
+      a.addEventListener("playing", posterGizle);
+      window.addEventListener("touchstart", kilidiAc, { passive: true });
+      window.addEventListener("touchmove", kilidiAc, { passive: true });
+      return () => {
+        window.removeEventListener("touchstart", kilidiAc);
+        window.removeEventListener("touchmove", kilidiAc);
+        a.removeEventListener("playing", posterGizle);
+        a.pause();
+      };
+    }
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return () => undefined;
     }
@@ -311,10 +341,6 @@ function Hero() {
     let gecis = false;
     let ticker = 0;
     const GECIS = 0.55;
-
-    const posterGizle = () => {
-      if (poster) poster.style.opacity = "0";
-    };
 
     const sar = () => {
       const sure = aktif.duration;
@@ -384,7 +410,7 @@ function Hero() {
       />
       <video
         ref={bRef}
-        className="hero-video"
+        className="hero-video hero-video-yedek"
         src="/mangal-dongu.mp4?v=nologo"
         muted
         playsInline
@@ -954,7 +980,7 @@ export default function Page() {
         href={WHATSAPP}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-5 right-5 z-50 inline-flex size-14 cursor-pointer items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_28px_-8px_rgba(37,211,102,0.8)] transition-transform duration-200 hover:scale-105"
+        className="fixed right-5 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-50 inline-flex size-14 cursor-pointer items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_28px_-8px_rgba(37,211,102,0.8)] transition-transform duration-200 hover:scale-105"
         aria-label="WhatsApp ile yaz"
       >
         <WhatsAppIkonu className="size-7" />

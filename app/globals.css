@@ -37,7 +37,8 @@ body {
 
 .hero-sahne {
   position: relative;
-  height: 100dvh;
+  height: 100svh;
+  min-height: 100dvh;
   overflow: hidden;
   background-color: transparent;
 }
@@ -58,22 +59,34 @@ body {
   opacity: 1;
 }
 
-.hero-video,
-.hero-poster {
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 58%,
-    rgba(0, 0, 0, 0.55) 78%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 58%,
-    rgba(0, 0, 0, 0.55) 78%,
-    transparent 100%
-  );
+@media (pointer: fine) {
+  .hero-video,
+  .hero-poster {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 58%,
+      rgba(0, 0, 0, 0.55) 78%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 58%,
+      rgba(0, 0, 0, 0.55) 78%,
+      transparent 100%
+    );
+  }
+}
+
+@media (pointer: coarse) {
+  .hero-video-yedek {
+    display: none !important;
+  }
+
+  .hero-video.aktif {
+    opacity: 1;
+  }
 }
 
 .hero-kopru {

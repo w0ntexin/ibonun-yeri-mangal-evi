@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import gsap from "gsap";
 
 /* ------------------------------------------------------------------ */
 /*  Veri                                                               */
@@ -268,265 +267,171 @@ function Header() {
 
 /* ------------------------------------------------------------------ */
 /*  Hero                                                               */
-/*  İlk kaydırmada video scroll ile senkron. Yazı yerinde kalır.       */
-/*  Çevirme bitince döngü; yenilemeden scroll videoyu bir daha sürmez. */
+/*  Kaydırma yok: ızgara döngüsü iki katmanla çapraz solar, dikiş      */
+/*  görünmez. Yazı sabit kalır.                                        */
 /* ------------------------------------------------------------------ */
 
 function Hero() {
-  const izRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const donguRef = useRef<HTMLVideoElement>(null);
+  const aRef = useRef<HTMLVideoElement>(null);
+  const bRef = useRef<HTMLVideoElement>(null);
   const posterRef = useRef<HTMLImageElement>(null);
-  const arayuzRef = useRef<HTMLDivElement>(null);
-  const ipucuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const video = videoRef.current;
-    const dongu = donguRef.current;
+    const a = aRef.current;
+    const b = bRef.current;
     const poster = posterRef.current;
-    const iz = izRef.current;
-    if (!video || !dongu || !iz) return;
-
-    const dokunmatik =
-      /iP(hone|od|ad)/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
-      window.matchMedia("(pointer: coarse)").matches;
+    if (!a || !b) return;
 
     const iosHazirla = (el: HTMLVideoElement) => {
       el.muted = true;
       el.defaultMuted = true;
       el.volume = 0;
       el.controls = false;
+      el.loop = false;
       el.playsInline = true;
       el.setAttribute("playsinline", "true");
       el.setAttribute("webkit-playsinline", "true");
       el.setAttribute("x-webkit-airplay", "deny");
     };
-    iosHazirla(video);
-    iosHazirla(dongu);
-    dongu.hidden = true;
-    dongu.loop = true;
-    video.loop = false;
-    video.pause();
-    video.currentTime = 0;
-    iz.style.height = "280svh";
+    iosHazirla(a);
+    iosHazirla(b);
 
     const oynat = (el: HTMLVideoElement) => {
       el.muted = true;
-      el.defaultMuted = true;
       el.controls = false;
       return el.play().catch(() => undefined);
     };
 
-    const posterGizle = () => {
-      if (poster) gsap.set(poster, { autoAlpha: 0 });
-    };
-
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      iz.style.height = "100dvh";
       return () => undefined;
     }
 
-    let bitti = false;
-    let tickerId = 0;
+    let aktif = a;
+    let yedek = b;
+    let gecis = false;
+    let ticker = 0;
+    const GECIS = 0.55;
 
-    const ilerleme = () => {
-      const pay = iz.offsetHeight - window.innerHeight;
-      if (pay <= 1) return 0;
-      return Math.min(1, Math.max(0, -iz.getBoundingClientRect().top / pay));
-    };
-
-    const donguyaDevret = () => {
-      if (bitti) return;
-      bitti = true;
-      window.removeEventListener("scroll", sar);
-      window.removeEventListener("touchmove", sar);
-      window.removeEventListener("touchstart", kilidiAc);
-      window.removeEventListener("touchend", jestBitti);
-      window.removeEventListener("wheel", sar);
-      cancelAnimationFrame(tickerId);
-      video.pause();
-      dongu.hidden = false;
-      gsap.set(dongu, { autoAlpha: 1 });
-      void oynat(dongu);
-      posterGizle();
-      gsap.set(ipucuRef.current, { autoAlpha: 0, display: "none" });
-
-      const sayfa = document.documentElement;
-      const oncekiYukseklik = sayfa.scrollHeight;
-      const oncekiScroll = window.scrollY;
-      iz.style.height = "100dvh";
-      const kisalma = oncekiYukseklik - sayfa.scrollHeight;
-      window.scrollTo({
-        top: Math.max(0, oncekiScroll - kisalma),
-        left: 0,
-        behavior: "instant",
-      });
+    const posterGizle = () => {
+      if (poster) poster.style.opacity = "0";
     };
 
     const sar = () => {
-      if (bitti) return;
-      const p = ilerleme();
-      if (p > 0.008) {
-        posterGizle();
-        gsap.set(ipucuRef.current, { autoAlpha: 0 });
+      const sure = aktif.duration;
+      if (
+        Number.isFinite(sure) &&
+        sure > GECIS + 0.2 &&
+        !gecis &&
+        aktif.currentTime >= sure - GECIS
+      ) {
+        gecis = true;
+        yedek.currentTime = 0;
+        void oynat(yedek);
+        yedek.classList.add("aktif");
+        aktif.classList.remove("aktif");
+        window.setTimeout(() => {
+          aktif.pause();
+          const onceki = aktif;
+          aktif = yedek;
+          yedek = onceki;
+          gecis = false;
+        }, GECIS * 1000);
       }
-      const sure = video.duration;
-      if (Number.isFinite(sure) && sure > 0 && p > 0) {
-        const hedef = p * sure;
-        if (Math.abs(video.currentTime - hedef) >= 1 / 40) {
-          try {
-            video.currentTime = hedef;
-          } catch {
-            /* */
-          }
-        }
-        if (dokunmatik && video.paused) void oynat(video);
-      }
-      if (p >= 0.985) donguyaDevret();
+      ticker = requestAnimationFrame(sar);
     };
 
-    const donguSar = () => {
-      sar();
-      if (!bitti) tickerId = requestAnimationFrame(donguSar);
-    };
+    a.classList.add("aktif");
+    void oynat(a).then(() => {
+      if (!a.paused) posterGizle();
+    });
+    a.addEventListener("playing", posterGizle);
 
     const kilidiAc = () => {
-      if (bitti) return;
-      void oynat(video);
+      void oynat(aktif);
+      posterGizle();
     };
-    const jestBitti = () => {
-      if (bitti || ilerleme() > 0.008) return;
-      video.pause();
-      video.currentTime = 0;
-    };
-
-    video.addEventListener("loadedmetadata", sar);
-    window.addEventListener("scroll", sar, { passive: true });
-    window.addEventListener("touchmove", sar, { passive: true });
-    window.addEventListener("wheel", sar, { passive: true });
     window.addEventListener("touchstart", kilidiAc, { passive: true });
-    window.addEventListener("touchend", jestBitti, { passive: true });
-    tickerId = requestAnimationFrame(donguSar);
+    ticker = requestAnimationFrame(sar);
 
     return () => {
-      bitti = true;
-      cancelAnimationFrame(tickerId);
-      window.removeEventListener("scroll", sar);
-      window.removeEventListener("touchmove", sar);
+      cancelAnimationFrame(ticker);
       window.removeEventListener("touchstart", kilidiAc);
-      window.removeEventListener("touchend", jestBitti);
-      window.removeEventListener("wheel", sar);
-      video.removeEventListener("loadedmetadata", sar);
-      video.pause();
-      dongu.pause();
+      a.removeEventListener("playing", posterGizle);
+      a.pause();
+      b.pause();
     };
   }, []);
 
   return (
-    <div ref={izRef} className="hero-iz">
-      <section
-        aria-label="İBONUN YERİ MANGAL EVİ tanıtım"
-        className="hero-sahne"
-      >
-        <video
-          ref={videoRef}
-          className="pointer-events-none absolute inset-0 z-0 size-full object-cover"
-          src="/mangal-izgara.mp4?v=nologo"
-          poster="/mangal-poster.jpg"
-          muted
-          playsInline
-          preload="auto"
-          controls={false}
-          disablePictureInPicture
-          disableRemotePlayback
-          aria-hidden="true"
-          tabIndex={-1}
-        />
+    <section
+      aria-label="İBONUN YERİ MANGAL EVİ tanıtım"
+      className="hero-sahne"
+    >
+      <video
+        ref={aRef}
+        className="hero-video aktif"
+        src="/mangal-dongu.mp4?v=nologo"
+        poster="/mangal-poster.jpg"
+        muted
+        playsInline
+        autoPlay
+        preload="auto"
+        controls={false}
+        disablePictureInPicture
+        disableRemotePlayback
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+      <video
+        ref={bRef}
+        className="hero-video"
+        src="/mangal-dongu.mp4?v=nologo"
+        muted
+        playsInline
+        preload="auto"
+        controls={false}
+        disablePictureInPicture
+        disableRemotePlayback
+        aria-hidden="true"
+        tabIndex={-1}
+      />
 
-        <video
-          ref={donguRef}
-          hidden
-          className="pointer-events-none absolute inset-0 z-[1] size-full object-cover"
-          src="/mangal-dongu.mp4?v=nologo"
-          muted
-          loop
-          playsInline
-          preload="auto"
-          controls={false}
-          disablePictureInPicture
-          disableRemotePlayback
-          aria-hidden="true"
-          tabIndex={-1}
-        />
+      <img
+        ref={posterRef}
+        src="/mangal-poster.jpg"
+        alt=""
+        className="hero-poster pointer-events-none absolute inset-0 z-[2] size-full object-cover transition-opacity duration-500"
+        aria-hidden="true"
+      />
 
-        <img
-          ref={posterRef}
-          src="/mangal-poster.jpg"
-          alt=""
-          className="pointer-events-none absolute inset-0 z-[2] size-full object-cover"
-          aria-hidden="true"
-        />
+      <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-komur/80 via-komur/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 z-[3] bg-[radial-gradient(ellipse_at_center,transparent_48%,color-mix(in_oklab,var(--color-komur)_70%,transparent)_100%)]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[4] h-[38%] bg-gradient-to-b from-transparent via-komur/40 to-komur" />
 
-        <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-komur/80 via-komur/15 to-komur/85" />
-        <div className="pointer-events-none absolute inset-0 z-[3] bg-[radial-gradient(ellipse_at_center,transparent_48%,color-mix(in_oklab,var(--color-komur)_82%,transparent)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center px-6 text-center">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_48%_32%_at_50%_50%,color-mix(in_oklab,var(--color-komur)_78%,transparent)_0%,transparent_75%)]" />
 
-        <div
-          ref={arayuzRef}
-          className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center px-6 text-center will-change-transform"
-        >
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_48%_32%_at_50%_50%,color-mix(in_oklab,var(--color-komur)_78%,transparent)_0%,transparent_75%)]" />
-
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.42em] text-altin/90 [text-shadow:0_2px_12px_rgba(0,0,0,0.9)] sm:text-xs">
-            İBONUN YERİ MANGAL EVİ
+        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.42em] text-altin/90 [text-shadow:0_2px_12px_rgba(0,0,0,0.9)] sm:text-xs">
+          İBONUN YERİ MANGAL EVİ
+        </span>
+        <h1 className="font-baslik mt-5 max-w-4xl text-balance text-4xl font-semibold leading-[1.08] tracking-[0.04em] [text-shadow:0_4px_30px_rgba(0,0,0,0.85)] sm:text-6xl lg:text-7xl">
+          <span className="block text-krem">Ateşin Lezzetle</span>
+          <span className="block bg-gradient-to-r from-altin via-alev to-kor-derin bg-clip-text text-transparent">
+            Buluştuğu Yer
           </span>
-          <h1 className="font-baslik mt-5 max-w-4xl text-balance text-4xl font-semibold leading-[1.08] tracking-[0.04em] [text-shadow:0_4px_30px_rgba(0,0,0,0.85)] sm:text-6xl lg:text-7xl">
-            <span className="block text-krem">Ateşin Lezzetle</span>
-            <span className="block bg-gradient-to-r from-altin via-alev to-kor-derin bg-clip-text text-transparent">
-              Buluştuğu Yer
-            </span>
-          </h1>
-          <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-krem/80 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)] sm:text-lg">
-            Korun üzerinde tek tek çevrilen, dumanını içine çekmiş gerçek mangal
-            lezzeti. Acele yok — iyi mangal sabır ister.
-          </p>
-          <a
-            href="#menu"
-            className="pointer-events-auto mt-9 cursor-pointer rounded-full border border-altin/25 bg-gradient-to-r from-kor to-alev px-8 py-4 text-sm font-bold text-black transition-all duration-200 hover:brightness-110"
-          >
-            Menüyü Keşfet
-          </a>
-        </div>
-
-        <div
-          ref={ipucuRef}
-          className="pointer-events-none absolute inset-x-0 bottom-10 z-20 flex flex-col items-center gap-2"
+        </h1>
+        <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-krem/80 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)] sm:text-lg">
+          Korun üzerinde tek tek çevrilen, dumanını içine çekmiş gerçek mangal
+          lezzeti. Acele yok — iyi mangal sabır ister.
+        </p>
+        <a
+          href="#menu"
+          className="pointer-events-auto mt-9 cursor-pointer rounded-full border border-altin/25 bg-gradient-to-r from-kor to-alev px-8 py-4 text-sm font-bold text-black transition-all duration-200 hover:brightness-110"
         >
-          <span className="text-[0.62rem] font-semibold uppercase tracking-[0.28em] text-duman">
-            Kaydırarak Çevir
-          </span>
-          <motion.span
-            className="hareketli text-altin"
-            initial={{ y: 0 }}
-            animate={{ y: [0, 7, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-5"
-              aria-hidden="true"
-            >
-              <path d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" />
-            </svg>
-          </motion.span>
-        </div>
-      </section>
-    </div>
+          Menüyü Keşfet
+        </a>
+      </div>
+    </section>
   );
 }
 
@@ -614,6 +519,60 @@ function Kivilcimlar() {
   );
 }
 
+const KOPRU_KIVILCIMLAR = Array.from({ length: 22 }, (_, i) => {
+  const rastgele = kivilcimUreteci(i + 91);
+  const boyut = rastgele(2, 4.4);
+  return {
+    sol: rastgele(6, 94),
+    boyut,
+    hale: Math.round(boyut * 3.6 * 100) / 100,
+    sure: rastgele(4.5, 9),
+    gecikme: rastgele(-9, 0),
+    kayma: rastgele(-40, 40),
+    olcek: rastgele(0.75, 1.25, 3),
+    opaklik: rastgele(0.55, 1, 3),
+    titre: rastgele(0.55, 1.5),
+    renk: KIVILCIM_RENKLERI[i % KIVILCIM_RENKLERI.length],
+  };
+});
+
+function HeroKopru() {
+  return (
+    <div className="hareketli hero-kopru" aria-hidden="true">
+      <div className="hero-kopru-kor" />
+      {KOPRU_KIVILCIMLAR.map((k, i) => (
+        <span
+          key={i}
+          className="kivilcim-kopru"
+          style={
+            {
+              left: `${k.sol}%`,
+              "--k-sure": `${k.sure}s`,
+              "--k-gecikme": `${k.gecikme}s`,
+              "--k-kayma": `${k.kayma}px`,
+              "--k-olcek": `${k.olcek}`,
+              "--k-opaklik": `${k.opaklik}`,
+            } as React.CSSProperties
+          }
+        >
+          <span
+            className="kivilcim-nokta"
+            style={
+              {
+                width: `${k.boyut}px`,
+                height: `${k.boyut}px`,
+                "--k-renk": k.renk,
+                "--k-hale": `${k.hale}px`,
+                "--k-titre": `${k.titre}s`,
+              } as React.CSSProperties
+            }
+          />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Öne Çıkan Lezzetler                                                */
 /* ------------------------------------------------------------------ */
@@ -622,7 +581,7 @@ function OneCikanLezzetler() {
   return (
     <section
       id="menu"
-      className="relative scroll-mt-24 border-t border-cizgi px-5 py-24 sm:px-8 sm:py-32"
+      className="relative scroll-mt-24 px-5 pb-24 pt-10 sm:px-8 sm:pb-32 sm:pt-14"
     >
       <div className="mx-auto max-w-7xl">
         <motion.div
@@ -985,6 +944,7 @@ export default function Page() {
       <Header />
       <main>
         <Hero />
+        <HeroKopru />
         <OneCikanLezzetler />
         <Hakkimizda />
         <BizeUlasin />

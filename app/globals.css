@@ -18,7 +18,6 @@
 }
 
 html {
-  /* Mobilde smooth, ScrollTrigger'ın kaydırma ölçümünü geciktirir */
   scroll-behavior: auto;
   color-scheme: dark;
 }
@@ -36,22 +35,83 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/*
-  İlk girişte kaydırma şeridi: sahne sticky, video scroll ile senkron.
-  Çevirme bitince JS yüksekliği 100dvh yapar; menü açılır.
-*/
-.hero-iz {
-  position: relative;
-  height: 280svh;
-  background-color: var(--color-komur);
-}
-
 .hero-sahne {
-  position: sticky;
-  top: 0;
+  position: relative;
   height: 100dvh;
   overflow: hidden;
-  background-color: var(--color-komur);
+  background-color: transparent;
+}
+
+.hero-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.55s linear;
+}
+
+.hero-video.aktif {
+  opacity: 1;
+}
+
+.hero-video,
+.hero-poster {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 58%,
+    rgba(0, 0, 0, 0.55) 78%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 58%,
+    rgba(0, 0, 0, 0.55) 78%,
+    transparent 100%
+  );
+}
+
+.hero-kopru {
+  position: relative;
+  z-index: 1;
+  height: 22vh;
+  margin-top: -18vh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-kopru-kor {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 0%, rgba(234, 88, 12, 0.16), transparent 70%),
+    linear-gradient(to bottom, transparent 0%, color-mix(in oklab, var(--color-komur) 35%, transparent) 45%, var(--color-komur) 100%);
+}
+
+.kivilcim-kopru {
+  position: absolute;
+  top: 0;
+  will-change: transform, opacity;
+  animation: kivilcim-kopru-dus var(--k-sure) cubic-bezier(0.22, 0.61, 0.36, 1) var(--k-gecikme) infinite;
+}
+
+@keyframes kivilcim-kopru-dus {
+  0% {
+    transform: translate3d(0, -8%, 0) scale(var(--k-olcek));
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--k-opaklik);
+  }
+  100% {
+    transform: translate3d(var(--k-kayma), 120%, 0) scale(calc(var(--k-olcek) * 0.45));
+    opacity: 0;
+  }
 }
 
 /* Klavye kullanıcıları için her zaman görünür odak halkası */
@@ -111,7 +171,7 @@ video::-webkit-media-controls-play-button {
   position: absolute;
   top: 0;
   will-change: transform, opacity;
-  animation: kivilcim-dus var(--k-sure) linear var(--k-gecikme) infinite;
+  animation: kivilcim-dus var(--k-sure) cubic-bezier(0.25, 0.46, 0.45, 0.94) var(--k-gecikme) infinite;
 }
 
 .kivilcim-nokta {

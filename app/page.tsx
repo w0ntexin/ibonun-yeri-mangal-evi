@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 /* ------------------------------------------------------------------ */
@@ -267,108 +267,55 @@ function Header() {
 
 /* ------------------------------------------------------------------ */
 /*  Hero                                                               */
-/*  Kaydırma yok: ızgara döngüsü iki katmanla çapraz solar, dikiş      */
-/*  görünmez. Yazı sabit kalır.                                        */
+/*  Tek döngü video. İkinci katman iOS/Android play tuşunu basıyordu.  */
 /* ------------------------------------------------------------------ */
 
 function Hero() {
-  const aRef = useRef<HTMLVideoElement>(null);
-  const bRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [oynuyor, setOynuyor] = useState(false);
 
-  useEffect(() => {
-    const a = aRef.current;
-    const b = bRef.current;
-    if (!a || !b) return;
+  useLayoutEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
 
-    const iosHazirla = (el: HTMLVideoElement) => {
-      el.muted = true;
-      el.defaultMuted = true;
-      el.volume = 0;
-      el.controls = false;
-      el.loop = false;
-      el.playsInline = true;
-      el.setAttribute("playsinline", "true");
-      el.setAttribute("webkit-playsinline", "true");
-      el.setAttribute("x-webkit-airplay", "deny");
-    };
-    iosHazirla(a);
-    iosHazirla(b);
-
-    const oynat = (el: HTMLVideoElement) => {
-      el.muted = true;
-      el.controls = false;
-      return el.play().catch(() => undefined);
-    };
+    el.muted = true;
+    el.defaultMuted = true;
+    el.volume = 0;
+    el.controls = false;
+    el.loop = true;
+    el.playsInline = true;
+    el.setAttribute("playsinline", "true");
+    el.setAttribute("webkit-playsinline", "true");
+    el.setAttribute("x-webkit-airplay", "deny");
 
     const dokunmatik =
       /iP(hone|od|ad)/.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    if (dokunmatik) {
-      a.loop = true;
-      a.setAttribute("loop", "true");
-      const kilidiAc = () => {
-        void oynat(a);
-      };
-      void oynat(a);
-      window.addEventListener("touchstart", kilidiAc, { passive: true });
-      window.addEventListener("touchmove", kilidiAc, { passive: true });
-      return () => {
-        window.removeEventListener("touchstart", kilidiAc);
-        window.removeEventListener("touchmove", kilidiAc);
-        a.pause();
-      };
+    if (
+      !dokunmatik &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
     }
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return () => undefined;
-    }
-
-    let aktif = a;
-    let yedek = b;
-    let gecis = false;
-    let ticker = 0;
-    const GECIS = 0.55;
-
-    const sar = () => {
-      const sure = aktif.duration;
-      if (
-        Number.isFinite(sure) &&
-        sure > GECIS + 0.2 &&
-        !gecis &&
-        aktif.currentTime >= sure - GECIS
-      ) {
-        gecis = true;
-        yedek.currentTime = 0;
-        void oynat(yedek);
-        yedek.classList.add("aktif");
-        aktif.classList.remove("aktif");
-        window.setTimeout(() => {
-          aktif.pause();
-          const onceki = aktif;
-          aktif = yedek;
-          yedek = onceki;
-          gecis = false;
-        }, GECIS * 1000);
-      }
-      ticker = requestAnimationFrame(sar);
+    const oynat = () => {
+      el.muted = true;
+      el.controls = false;
+      return el.play().then(() => setOynuyor(true)).catch(() => undefined);
     };
 
-    a.classList.add("aktif");
-    void oynat(a);
-
-    const kilidiAc = () => {
-      void oynat(aktif);
-    };
-    window.addEventListener("touchstart", kilidiAc, { passive: true });
-    ticker = requestAnimationFrame(sar);
+    const hazir = () => setOynuyor(true);
+    void oynat();
+    el.addEventListener("playing", hazir);
+    window.addEventListener("touchstart", oynat, { passive: true });
+    window.addEventListener("touchmove", oynat, { passive: true });
 
     return () => {
-      cancelAnimationFrame(ticker);
-      window.removeEventListener("touchstart", kilidiAc);
-      a.pause();
-      b.pause();
+      el.removeEventListener("playing", hazir);
+      window.removeEventListener("touchstart", oynat);
+      window.removeEventListener("touchmove", oynat);
     };
   }, []);
 
@@ -378,31 +325,25 @@ function Hero() {
       className="hero-sahne"
     >
       <video
-        ref={aRef}
+        ref={videoRef}
         className="hero-video aktif"
         src="/mangal-dongu.mp4?v=hq"
         muted
         playsInline
         autoPlay
+        loop
         preload="auto"
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
+        controlsList="nofullscreen nodownload noremoteplayback"
         aria-hidden="true"
         tabIndex={-1}
+        {...{ "webkit-playsinline": "true" }}
       />
-      <video
-        ref={bRef}
-        className="hero-video hero-video-yedek"
-        src="/mangal-dongu.mp4?v=hq"
-        muted
-        playsInline
-        preload="auto"
-        controls={false}
-        disablePictureInPicture
-        disableRemotePlayback
+      <div
+        className={`hero-video-ortu${oynuyor ? " hazir" : ""}`}
         aria-hidden="true"
-        tabIndex={-1}
       />
 
       <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-komur/80 via-komur/10 to-transparent" />

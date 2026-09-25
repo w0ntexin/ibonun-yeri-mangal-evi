@@ -326,8 +326,9 @@ function Hero() {
     >
       <video
         ref={videoRef}
-        className="hero-video aktif"
+        className="hero-video"
         src="/mangal-dongu.mp4?v=hq"
+        poster="/mangal-dongu-kare.jpg"
         muted
         playsInline
         autoPlay
@@ -341,7 +342,9 @@ function Hero() {
         tabIndex={-1}
         {...{ "webkit-playsinline": "true" }}
       />
-      <div
+      <img
+        src="/mangal-dongu-kare.jpg"
+        alt=""
         className={`hero-video-ortu${oynuyor ? " hazir" : ""}`}
         aria-hidden="true"
       />

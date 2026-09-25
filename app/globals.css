@@ -43,28 +43,23 @@ body {
   background-color: transparent;
 }
 
-.hero-video {
+.hero-video,
+.hero-video-ortu {
   position: absolute;
   inset: 0;
-  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.55s linear;
 }
 
-.hero-video.aktif {
-  opacity: 1;
+.hero-video {
+  z-index: 0;
 }
 
 .hero-video-ortu {
-  position: absolute;
-  inset: 0;
   z-index: 2;
   background-color: var(--color-komur);
-  pointer-events: none;
   opacity: 1;
   transition: opacity 0.35s linear;
 }
@@ -74,7 +69,8 @@ body {
 }
 
 @media (pointer: fine) {
-  .hero-video {
+  .hero-video,
+  .hero-video-ortu {
     -webkit-mask-image: linear-gradient(
       to bottom,
       #000 0%,

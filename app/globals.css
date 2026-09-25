@@ -60,8 +60,7 @@ body {
 }
 
 @media (pointer: fine) {
-  .hero-video,
-  .hero-poster {
+  .hero-video {
     -webkit-mask-image: linear-gradient(
       to bottom,
       #000 0%,

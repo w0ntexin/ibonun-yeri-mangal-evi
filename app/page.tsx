@@ -274,12 +274,10 @@ function Header() {
 function Hero() {
   const aRef = useRef<HTMLVideoElement>(null);
   const bRef = useRef<HTMLVideoElement>(null);
-  const posterRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const a = aRef.current;
     const b = bRef.current;
-    const poster = posterRef.current;
     if (!a || !b) return;
 
     const iosHazirla = (el: HTMLVideoElement) => {
@@ -302,10 +300,6 @@ function Hero() {
       return el.play().catch(() => undefined);
     };
 
-    const posterGizle = () => {
-      if (poster) poster.style.opacity = "0";
-    };
-
     const dokunmatik =
       /iP(hone|od|ad)/.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
@@ -316,18 +310,13 @@ function Hero() {
       a.setAttribute("loop", "true");
       const kilidiAc = () => {
         void oynat(a);
-        posterGizle();
       };
-      void oynat(a).then(() => {
-        if (!a.paused) posterGizle();
-      });
-      a.addEventListener("playing", posterGizle);
+      void oynat(a);
       window.addEventListener("touchstart", kilidiAc, { passive: true });
       window.addEventListener("touchmove", kilidiAc, { passive: true });
       return () => {
         window.removeEventListener("touchstart", kilidiAc);
         window.removeEventListener("touchmove", kilidiAc);
-        a.removeEventListener("playing", posterGizle);
         a.pause();
       };
     }
@@ -367,14 +356,10 @@ function Hero() {
     };
 
     a.classList.add("aktif");
-    void oynat(a).then(() => {
-      if (!a.paused) posterGizle();
-    });
-    a.addEventListener("playing", posterGizle);
+    void oynat(a);
 
     const kilidiAc = () => {
       void oynat(aktif);
-      posterGizle();
     };
     window.addEventListener("touchstart", kilidiAc, { passive: true });
     ticker = requestAnimationFrame(sar);
@@ -382,7 +367,6 @@ function Hero() {
     return () => {
       cancelAnimationFrame(ticker);
       window.removeEventListener("touchstart", kilidiAc);
-      a.removeEventListener("playing", posterGizle);
       a.pause();
       b.pause();
     };
@@ -396,8 +380,7 @@ function Hero() {
       <video
         ref={aRef}
         className="hero-video aktif"
-        src="/mangal-dongu.mp4?v=nologo"
-        poster="/mangal-poster.jpg"
+        src="/mangal-dongu.mp4?v=hq"
         muted
         playsInline
         autoPlay
@@ -411,7 +394,7 @@ function Hero() {
       <video
         ref={bRef}
         className="hero-video hero-video-yedek"
-        src="/mangal-dongu.mp4?v=nologo"
+        src="/mangal-dongu.mp4?v=hq"
         muted
         playsInline
         preload="auto"
@@ -420,14 +403,6 @@ function Hero() {
         disableRemotePlayback
         aria-hidden="true"
         tabIndex={-1}
-      />
-
-      <img
-        ref={posterRef}
-        src="/mangal-poster.jpg"
-        alt=""
-        className="hero-poster pointer-events-none absolute inset-0 z-[2] size-full object-cover transition-opacity duration-500"
-        aria-hidden="true"
       />
 
       <div className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-komur/80 via-komur/10 to-transparent" />
